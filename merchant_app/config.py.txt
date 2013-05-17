@@ -5,14 +5,27 @@ FLASK_SERVER_ARGS = dict(
     #PORT = '8080',
 )
 
+# +-----------+
+# | IMPORTANT | You must fill in the public/secret API keys given to you by Affirm.
+# +-----------+
 AFFIRM = dict(
-    JS_URL = "https://sandbox.affirm.com/v1/affirm.js",
+    SERVER_NAME = "https://sandbox.affirm.com",
+    API_VERSION = "v1",
     PUBLIC_API_KEY = "<Your public API key from Affirm>",
     SECRET_API_KEY = "<Your secret API key from Affirm>",
 )
 
-# Setting this value to True will inject the checkout notification url
-# as an Affirm html tag.  It is required that sandbox.affirm.com can 
-# reach your server in order for checkout to function.
-INJECT_CHECKOUT_NOTIFICATION = False
+# Whether or not to inject the checkout notification url as an Affirm html tag.
+# If True, it is required that sandbox.affirm.com can reach your server in
+# order for checkout to function.
+# ADVANCED: You can set this value to False if you are developing on a machine
+#           that is not externally visible, but you won't receive any
+#           notifications from Affirm
+INJECT_CHECKOUT_NOTIFICATION = True
 
+# +-----------+
+# | IMPORTANT | You must change this to your externally visible server name.
+# +-----------+
+# We need the external server name in order to register webhook callbacks with
+# the Affirm server. 
+OUR_SERVER_NAME = "http://example.com"
