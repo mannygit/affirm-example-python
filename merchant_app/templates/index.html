@@ -58,7 +58,7 @@
                 <span style="font-weight: bold">${{unit_price}}</span>
             </div>
         </div>
-        <div id="affirm_button"/>
+        <div id="affirm_button"></div>
     <form action="#" onsubmit="return false">
         <input type="hidden" class="AffirmMerchant" name="public_api_key" value="{{config.AFFIRM.PUBLIC_API_KEY}}"/>
         <input type="hidden" class="AffirmCheckout" name="currency" value="USD"/>
@@ -71,9 +71,10 @@
         <input type="hidden" class="AffirmItem" name="unit_price" value="{{unit_price}}"/>
         <input type="hidden" class="AffirmItem" name="item_url" value="{{item_url}}"/>
         <input type="hidden" class="AffirmItem" name="item_thumbnail_url" value="{{item_thumbnail_url}}"/>
-        <input type="hidden" class="AffirmItem" name="shipping_type" value="FedEx Ground#2.00"/>
-        <input type="hidden" class="AffirmItem" name="shipping_type" value="FedEx 2nd Day#13.00"/>
         <input type="hidden" class="AffirmItem" name="required_shipping_fields" value="name,address,email,phone"/>
+
+        <!--input type="hidden" class="AffirmItem" name="shipping_type" value="FedEx Ground#2.00"/>
+        <input type="hidden" class="AffirmItem" name="shipping_type" value="FedEx 2nd Day#13.00"/-->
     </form>
     </body>
 </html>

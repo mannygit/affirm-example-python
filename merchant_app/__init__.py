@@ -46,19 +46,25 @@ def create_app(settings):
             display_name = "Acme SLR-NG",
             unit_price = "15.00"
         )
-    
+
         if app.config["INJECT_CHECKOUT_NOTIFICATION"]:
             template_data["checkout_notification_url"] = OUR_SERVER_NAME + CHECKOUT_NOTIFICATION
         return flask.render_template("index.html", **template_data)
-    
-    @app.route(USER_CONFIRM_PAGE)
-    def user_confirm_page():
+
+    @app.route(USER_CONFIRM_PAGE + "/<string:checkout_id>")
+    def user_confirm_page(checkout_id):
         """
         The page to render after the user completes checkout. Typically this will
         display a confirmation message to the user.
         """
+        response = requests.get(AFFIRM_API_URL_BASE + "/order/" + checkout_id,
+                                headers={"Content-Type": "application/json"},
+                                auth=(app.config["AFFIRM"]["PUBLIC_API_KEY"],
+                                    app.config["AFFIRM"]["SECRET_API_KEY"]),
+                                verify=False)
+        return "<pre>\n" + json.dumps(json.loads(response.content), indent=2, sort_keys=True) + "\n</pre>"
         return "Order confirmed."
-    
+
     @app.route(CHECKOUT_NOTIFICATION, methods=["POST"])
     def affirm_checkout_notification():
         """
@@ -69,20 +75,22 @@ def create_app(settings):
         print "Checkout Notification Callback:"
         pprint.pprint(flask.request.json)
 
+        checkout_id = flask.request.json['req_id'][::-1]
         return flask.jsonify({
             # Indicates the webhook that Affirm should call after approving payment
             # for the order.
             "order_notification_url": OUR_SERVER_NAME + ORDER_NOTIFICATION,
-    
+            "user_confirm_url": OUR_SERVER_NAME + USER_CONFIRM_PAGE + "/%s" % checkout_id,
+            "checkout_id": checkout_id,
+            "shipping_amount": "2.00",
+            "tax_amount": "1.24",
             # Indicates shipping/taxes for each item in the order
             "items": {
                 "ACME-SLR-NG-01": {
-                    "shipping_amount": "2.00",
-                    "tax_amount": "1.24"
                 }
             }
         })
-    
+
     @app.route(ORDER_NOTIFICATION, methods=["POST"])
     def affirm_order_notification():
         """
@@ -91,11 +99,11 @@ def create_app(settings):
         """
         print "Order Notification Callback:"
         pprint.pprint(flask.request.json)
-    
+
         # The CVT is posted as the data of the request
         assert "token" in flask.request.json
         assert "sig" in flask.request.json
-    
+
         token = flask.request.json["token"]
         sig = flask.request.json["sig"]
         conf_code = token["conf_code"]
@@ -107,15 +115,16 @@ def create_app(settings):
             # valid order.
             # order_is_valid = False
             pass
-    
+
         if order_is_valid:
             # Capture the order.
             response = requests.post(AFFIRM_API_URL_BASE + "/order/" + conf_code + "/capture",
                                      data=json.dumps(dict(cvt=dict(sig=sig, token=token))),
                                      headers={"Content-Type": "application/json"},
                                      auth=(app.config["AFFIRM"]["PUBLIC_API_KEY"],
-                                           app.config["AFFIRM"]["SECRET_API_KEY"]))
-        
+                                           app.config["AFFIRM"]["SECRET_API_KEY"]),
+                                     verify=False)
+
             if not response.ok:
                 print "Attempted to capture. Server response was %s" % response
                 print response.content
@@ -127,15 +136,16 @@ def create_app(settings):
                                      data=json.dumps(dict(cvt=dict(sig=sig, token=token))),
                                      headers={"Content-Type": "application/json"},
                                      auth=(app.config["AFFIRM"]["PUBLIC_API_KEY"],
-                                           app.config["AFFIRM"]["SECRET_API_KEY"]))
-        
+                                           app.config["AFFIRM"]["SECRET_API_KEY"]),
+                                     verify=False)
+
             if not response.ok:
                 # Even if we don't successfully cancel, the order will eventually expire.
                 print "Attempted to cancel. Server response was %s" % response
                 print response.content
             else:
                 print "Canceled successfully."
-    
+
         return ""
 
     #####
