@@ -40,3 +40,5 @@ nosetests.xml
 
 # Config
 merchant_app/config.py
+
+.idea
